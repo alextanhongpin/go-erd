@@ -1,0 +1,40 @@
+Title: User Admin Roles
+
+[Logins] {"color": "#fcefce" }
+*id
+username
+password_salt
+password_hash
++user_id
+
+[Users] {"color": "#cefcef" }
+*id
+first_name
+last_name
+username
+
+[Memberships] {"color": "#eeeeee"}
+*id
++user_id
++company_id
++role_id
+email
+phone_number
+fax
+
+[Companies] {"color": "#eeeeee"}
+*id
+name
+access_level
++account_id
+
+[Accounts]
+*id
+name
+plan_level
+
+# Relationships.
+Users 1--? Logins
+Users 1--+ Memberships
+Companies 1--+ Memberships
+Companies +--1 Accounts
