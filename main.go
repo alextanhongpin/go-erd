@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -31,15 +32,15 @@ func main() {
 		}
 	}
 	{
-		re := regexp.MustCompile(`(?m)(\[.+\]([{}:"\n\s\w]+)?[\s\w\n*+]+$)`)
+		re := regexp.MustCompile(`(?m)(\[.+\]([{}:"#\n\s\w]+)?[\s\w\n*+]+$)`)
 		result := re.FindAllStringSubmatch(raw, -1)
 		for _, entities := range result {
 			entity := parseEntity(entities[0])
-			header, columns := entity[0], entity[1:]
-			if len(data.Entities) == 0 {
-				data.Entities = make([]renderer.Entity, 0)
+			var columns []string
+			for _, col := range entity.Columns {
+				columns = append(columns, col.String())
 			}
-			data.Entities = append(data.Entities, renderer.Entity{Title: header, Columns: columns})
+			data.Entities = append(data.Entities, renderer.Entity{Title: entity.Header.Name, Columns: columns, Option: entity.Header.Option})
 		}
 	}
 	{
@@ -52,25 +53,41 @@ func main() {
 				data.Relations = make([]renderer.Relation, 0)
 			}
 			data.Relations = append(data.Relations, renderer.Relation{
-				fromEntity,
-				toEntity,
-				relationsMapper[toRelation],
-				relationsMapper[fromRelation],
+				From:         fromEntity,
+				To:           toEntity,
+				FromCardinal: relationsMapper[toRelation],
+				ToCardinal:   relationsMapper[fromRelation],
 			})
-
 		}
 	}
 	renderer.Render(data)
-
 }
-func parseHeader(header string) string {
+
+type Header struct {
+	Name   string
+	Option renderer.Option
+}
+
+func parseHeader(header string) Header {
 	// TODO: Map options for the header.
-	re := regexp.MustCompile(`\[(.+)\](\s+\{.+\})?`)
+	re := regexp.MustCompile(`(?m)^\[(.+)\](\s+\{.+\})?`)
 	result := re.FindStringSubmatch(header)
-	if len(result) > 2 {
-		return strings.TrimSpace(result[1])
+	hdr := strings.TrimSpace(result[1])
+	defaultOption := renderer.Option{Color: "white"}
+	if len(result) > 2 && len(result[2]) > 0 {
+		var opt renderer.Option
+		if err := json.Unmarshal([]byte(result[2]), &opt); err != nil {
+			return Header{
+				Name:   hdr,
+				Option: defaultOption,
+			}
+		}
+		return Header{
+			Name:   hdr,
+			Option: opt,
+		}
 	}
-	return strings.TrimSpace(result[1])
+	return Header{Name: hdr, Option: defaultOption}
 }
 
 type Column struct {
@@ -78,7 +95,14 @@ type Column struct {
 }
 
 func (c Column) String() string {
-	return c.Name
+	name := c.Name
+	if c.IsPrimaryKey() {
+		name = fmt.Sprintf(`<U>%s</U>`, name)
+	}
+	if c.IsForeignKey() {
+		name = fmt.Sprintf(`<I>%s</I>`, name)
+	}
+	return name
 }
 
 func (c Column) multipleAttributes() bool {
@@ -105,7 +129,12 @@ func parseBody(body []string) []Column {
 	return result
 }
 
-func parseEntity(raw string) []string {
+type Entity struct {
+	Header  Header
+	Columns []Column
+}
+
+func parseEntity(raw string) Entity {
 	raw = strings.TrimSpace(raw)
 	lines := strings.Split(raw, "\n")
 	var parsed []string
@@ -121,20 +150,8 @@ func parseEntity(raw string) []string {
 		parsed = append(parsed, line)
 	}
 	header, body := parsed[0], parsed[1:]
-	header = parseHeader(header)
+	headers := parseHeader(header)
 	columns := parseBody(body)
-	var result []string
-	result = append(result, header)
-	for _, col := range columns {
-		res := col.Name
-		// NOTE: Italic and underline only works for .svg, not .png.
-		if col.IsPrimaryKey() {
-			res = fmt.Sprintf(`<U>%s</U>`, res)
-		}
-		if col.IsForeignKey() {
-			res = fmt.Sprintf(`<I>%s</I>`, res)
-		}
-		result = append(result, res)
-	}
-	return result
+
+	return Entity{Header: headers, Columns: columns}
 }

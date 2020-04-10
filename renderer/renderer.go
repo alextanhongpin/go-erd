@@ -5,14 +5,20 @@ import (
 	"os"
 )
 
+type Option struct {
+	Color string `json:"color"`
+}
+
 type Data struct {
 	Title     string
 	Entities  []Entity
 	Relations []Relation
 }
+
 type Entity struct {
 	Title   string
 	Columns []string
+	Option  Option
 }
 
 type Relation struct {
@@ -30,20 +36,23 @@ digraph G {
     rankdir=LR;
     graph [pad="0.5", nodesep="1", ranksep="2"];
 
-    // Box for entities
+    //
+    // Box for entities.
+    //
     node [shape=none, margin=0]
 
-    // One-to-many relation (from one, to many)
-    // edge [arrowhead=crow, arrowtail=none, dirType=both]
+    //
+    // Relationship Edges.
+    //
     edge[arrowhead=none, arrowtail=none, dirType=both, style=dashed,color="#888888"];
 
     //
-    // Entities
+    // Entities.
     //
     {{- range $entity := .Entities}}
     "{{$entity.Title}}" [label={{noescape "<"}}
 	<table border="0" cellborder="1" cellspacing="0" cellpadding="4">
-	    <tr><td align="left">{{noescape $entity.Title}}</td></tr>
+	    <tr><td  bgColor="{{$entity.Option.Color}}" align="left">{{noescape $entity.Title}}</td></tr>
 	    {{- range $col := $entity.Columns}}
 	    <tr><td align="left">{{noescape $col}}</td></tr>
 	    {{- end}}
@@ -52,7 +61,7 @@ digraph G {
     {{- end}}
 
     //
-    // Relationships
+    // Relationships.
     //
     {{- range $rel := .Relations}}
     "{{$rel.From}}"->"{{$rel.To}}"[taillabel="{{$rel.FromCardinal}}", headlabel="{{$rel.ToCardinal}}"];
@@ -66,14 +75,5 @@ func Render(data Data) {
 	tmpl := template.Must(template.New("").Funcs(template.FuncMap{
 		"noescape": noescape,
 	}).Parse(tpl))
-	// f, err := os.Create("out.dot")
-	// if err != nil {
-	//         log.Println("create file: ", err)
-	//         return
-	// }
 	tmpl.Execute(os.Stdout, data)
-	// err = tmpl.Execute(f, data)
-	// if err != nil {
-	// log.Fatalf("execution failed: %s", err)
-	// }
 }
