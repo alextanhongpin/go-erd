@@ -1,13 +1,12 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"regexp"
 	"strings"
 
+	"github.com/alextanhongpin/go-db-parser/parser"
 	"github.com/alextanhongpin/go-db-parser/renderer"
 )
 
@@ -35,7 +34,7 @@ func main() {
 		re := regexp.MustCompile(`(?m)(\[.+\]([{}:"#\n\s\w]+)?[\s\w\n*+()]+$)`)
 		result := re.FindAllStringSubmatch(raw, -1)
 		for _, entities := range result {
-			entity := parseEntity(entities[0])
+			entity := parser.ParseEntity(entities[0])
 			var columns []string
 			for _, col := range entity.Columns {
 				columns = append(columns, col.String())
@@ -61,97 +60,4 @@ func main() {
 		}
 	}
 	renderer.Render(data)
-}
-
-type Header struct {
-	Name   string
-	Option renderer.Option
-}
-
-func parseHeader(header string) Header {
-	// TODO: Map options for the header.
-	re := regexp.MustCompile(`(?m)^\[(.+)\](\s+\{.+\})?`)
-	result := re.FindStringSubmatch(header)
-	hdr := strings.TrimSpace(result[1])
-	defaultOption := renderer.Option{Color: "white"}
-	if len(result) > 2 && len(result[2]) > 0 {
-		var opt renderer.Option
-		if err := json.Unmarshal([]byte(result[2]), &opt); err != nil {
-			return Header{
-				Name:   hdr,
-				Option: defaultOption,
-			}
-		}
-		return Header{
-			Name:   hdr,
-			Option: opt,
-		}
-	}
-	return Header{Name: hdr, Option: defaultOption}
-}
-
-type Column struct {
-	Name string
-}
-
-func (c Column) String() string {
-	name := c.Name
-	if c.IsPrimaryKey() {
-		name = fmt.Sprintf(`<U>%s</U>`, name)
-	}
-	if c.IsForeignKey() {
-		name = fmt.Sprintf(`<I>%s</I>`, name)
-	}
-	return name
-}
-
-func (c Column) multipleAttributes() bool {
-	return strings.HasPrefix(c.Name, "*+") || strings.HasPrefix(c.Name, "+*")
-}
-
-func (c Column) IsForeignKey() bool {
-	return strings.HasPrefix(c.Name, "+") || c.multipleAttributes()
-}
-
-func (c Column) IsPrimaryKey() bool {
-	return strings.HasPrefix(c.Name, "*") || c.multipleAttributes()
-}
-
-func NewColumn(col string) Column {
-	return Column{Name: strings.TrimSpace(col)}
-}
-
-func parseBody(body []string) []Column {
-	var result []Column
-	for _, col := range body {
-		result = append(result, NewColumn(col))
-	}
-	return result
-}
-
-type Entity struct {
-	Header  Header
-	Columns []Column
-}
-
-func parseEntity(raw string) Entity {
-	raw = strings.TrimSpace(raw)
-	lines := strings.Split(raw, "\n")
-	var parsed []string
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if len(line) == 0 {
-			continue
-		}
-		// Skip comments.
-		if strings.HasPrefix(line, "#") {
-			continue
-		}
-		parsed = append(parsed, line)
-	}
-	header, body := parsed[0], parsed[1:]
-	headers := parseHeader(header)
-	columns := parseBody(body)
-
-	return Entity{Header: headers, Columns: columns}
 }
