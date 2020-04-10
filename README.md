@@ -1,6 +1,6 @@
 # go-erd
 
-## MOTIVATION :muscle
+## MOTIVATION :muscle:
 
 Create ER (Entity-Relationship) diagrams can be a pain, especially when you need to update them. I find writing the schema as text to be the easiest to maintain, at the same time I would like to see a visual representation of the schema. The endgoal is to create something similar like Markdown, where one can just edit and preview the changes on the go.
 
@@ -43,7 +43,7 @@ Output:
 
 # Specification
 
-## ENTITY
+### ENTITY
 
 Entity represents your table. Below is a sample of the `Roles` table:
 
@@ -55,7 +55,7 @@ description
 *+person_id
 ```
 
-The name of the Entity must be wrapped in `[]` square brackets, and it may follow an option to configure the table color (NOTE: Only valid CSS color names, e.g. red, green or six character hex code is valid, so `#333` will not be rendered correctly).
+The name of the Entity must be wrapped in `[]` square brackets, and it may follow an option to configure the table color (NOTE: Only valid CSS color names, e.g. red, green or six character hex code is valid, so `#333` will not be rendered correctly). Any rows after the table name will be attributes (or columns of the table).
 
 Aside from that, there are other operators that we can use to assign to our diagram:
 ```
@@ -73,7 +73,7 @@ email, text (UID)
 
 Simple is best :smile:
 
-## RELATIONSHIP
+### RELATIONSHIP
 
 Each relationship must be between exactly two entities, which need not
 be distinct. Each entity in the relationship has exactly one of four
