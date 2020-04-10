@@ -80,12 +80,13 @@ Each relationship must be between exactly two entities, which need not
 be distinct. Each entity in the relationship has exactly one of four
 possible cardinalities:
 
-| Cardinality | Syntax |
-| -- | -- |
-| 0 or 1 |        ? |
-| exactly 1 |     1 |
-| 0 or more |     * |
-| 1 or more |     + |
+```
+Cardinality  Syntax
+0 or 1         ?
+exactly 1      1
+0 or more      *
+1 or more      +
+```
 
 And we represent them in the format:
 
