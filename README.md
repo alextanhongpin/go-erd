@@ -3,6 +3,8 @@
 Converts this text into an Entity Relationship Diagram:
 
 ```
+Title: User Schema
+
 [Person] {color: "red"}
 *name
 height

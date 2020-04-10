@@ -6,6 +6,7 @@ import (
 )
 
 type Data struct {
+	Title     string
 	Entities  []Entity
 	Relations []Relation
 }
@@ -24,7 +25,7 @@ digraph G {
     pencolor=black
     fontsize=16
     labelloc=t
-    label = "title"
+    label = "{{- .Title -}}"
 
     rankdir=LR;
     graph [pad="0.5", nodesep="1", ranksep="2"];

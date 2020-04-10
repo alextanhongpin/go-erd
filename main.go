@@ -15,13 +15,20 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	raw := string(content)
+	raw := strings.TrimSpace(string(content))
 	var data renderer.Data
 	relationsMapper := map[string]string{
 		"1": "1",    // exactly 1
 		"*": "0..N", // 0 or more
 		"+": "1..N", // 1 or more
 		"?": "0..1", // 0 or 1
+	}
+	{
+		re := regexp.MustCompile(`(?m)^Title:([\w ]+)$`)
+		result := re.FindStringSubmatch(raw)
+		if len(result) > 1 {
+			data.Title = strings.TrimSpace(result[1])
+		}
 	}
 	{
 		re := regexp.MustCompile(`(?m)(\[.+\]([{}:"\n\s\w]+)?[\s\w\n*+]+$)`)
