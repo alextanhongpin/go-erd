@@ -3,16 +3,16 @@
 Converts this text into an Entity Relationship Diagram:
 
 ```
-Title: User Schema
+Title: User Schema Design
 
-[Person] {color: "red"}
+[Person] {"color": "#fcefce" }
 *name
 height
 weight
 birth_date
 +birth_place_id
 
-[Birth Place]
+[Birth Place] {"color": "#cefcef" }
 *id
 birth_city
 birth state
@@ -21,7 +21,8 @@ birth country
 [Roles]
 *id
 name
-+user_id
+description
++person_id
 
 # Each relationship must be between exactly two entities, which need not
 # be distinct. Each entity in the relationship has exactly one of four
@@ -32,7 +33,7 @@ name
 # exactly 1      1
 # 0 or more      *
 # 1 or more      +
-Person *--1 Birth Place
+Person +--1 Birth Place
 Person *--1 Roles
 ```
 
