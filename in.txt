@@ -1,32 +1,28 @@
+# Comments will be skipped :)
+# Optionally, we can add titles.
 Title: User Schema Design
 
+# Entities.
 [Person] {"color": "#fcefce" }
 *name
 height
 weight
 birth_date
 +birth_place_id
+email (UID)
 
 [Birth Place] {"color": "#cefcef" }
 *id
 birth_city
-birth state
-birth country
+birth_state
+birth_country
 
-[Roles]
+[Roles] {"color": "#eeeeee"}
 *id
 name
 description
 +person_id
 
-# Each relationship must be between exactly two entities, which need not
-# be distinct. Each entity in the relationship has exactly one of four
-# possible cardinalities:
-#
-# Cardinality    Syntax
-# 0 or 1         ?
-# exactly 1      1
-# 0 or more      *
-# 1 or more      +
+# Relationships.
 Person +--1 Birth Place
-Person *--1 Roles
+Person *--? Roles

@@ -32,7 +32,7 @@ func main() {
 		}
 	}
 	{
-		re := regexp.MustCompile(`(?m)(\[.+\]([{}:"#\n\s\w]+)?[\s\w\n*+]+$)`)
+		re := regexp.MustCompile(`(?m)(\[.+\]([{}:"#\n\s\w]+)?[\s\w\n*+()]+$)`)
 		result := re.FindAllStringSubmatch(raw, -1)
 		for _, entities := range result {
 			entity := parseEntity(entities[0])
