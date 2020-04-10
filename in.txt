@@ -9,7 +9,7 @@ height
 weight
 birth_date
 +birth_place_id
-email (UID)
+email (uid)
 
 [Birth Place] {"color": "#cefcef" }
 *id
@@ -18,10 +18,10 @@ birth_state
 birth_country
 
 [Roles] {"color": "#eeeeee"}
-*id
+*id (uid)
+*+person_id (uid)
 name
 description
-+person_id
 
 # Relationships.
 Person +--1 Birth Place
