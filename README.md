@@ -1,5 +1,13 @@
 # go-erd
 
+## Usage
+
+```bash
+# clone the repository
+$ go get github.com/alextanhongpin/go-erd
+$ go build
+$ ./erd -in in.txt -out out.png
+```
 ## MOTIVATION :muscle:
 
 Create ER (Entity-Relationship) diagrams can be a pain, especially when you need to update them. I find writing the schema as text to be the easiest to maintain, at the same time I would like to see a visual representation of the schema. The endgoal is to create something similar like Markdown, where one can just edit and preview the changes on the go.
