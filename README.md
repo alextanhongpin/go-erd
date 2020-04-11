@@ -3,10 +3,8 @@
 ## Usage
 
 ```bash
-# clone the repository
-$ go get github.com/alextanhongpin/go-erd
-$ go build
-$ ./erd -in in.txt -out out.png
+$ go install github.com/alextanhongpin/go-erd
+$ ./go-erd -in in.txt -out out.png
 ```
 ## MOTIVATION :muscle:
 
