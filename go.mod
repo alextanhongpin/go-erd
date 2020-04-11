@@ -1,3 +1,3 @@
-module github.com/alextanhongpin/go-db-parser
+module github.com/alextanhongpin/erd
 
 go 1.14
