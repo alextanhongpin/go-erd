@@ -1,4 +1,4 @@
-package erd
+package main
 
 import (
 	"bufio"
