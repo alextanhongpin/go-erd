@@ -2,7 +2,7 @@
 # Optionally, we can add titles.
 Title: User Schema Design
 
-# Entities.
+# Holds the login user attributes.
 [Person] {"color": "#fcefce" }
 *name
 height

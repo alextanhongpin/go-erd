@@ -2,17 +2,18 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"html/template"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
-	"os/exec"
 	"regexp"
 	"strings"
+
+	"github.com/goccy/go-graphviz"
 )
 
 type Template struct {
@@ -57,10 +58,12 @@ type Option struct {
 }
 
 type Entity struct {
-	Comments   []string
-	Name       string
-	Attributes []Attribute
-	Option     Option
+	Comments       []string
+	CommentsString string
+	HasComments    bool
+	Name           string
+	Attributes     []Attribute
+	Option         Option
 }
 
 type Relation struct {
@@ -95,17 +98,8 @@ func NewRelationFromSlice(r []string) Relation {
 	}
 }
 
-func main() {
-	var in, out string
-	flag.StringVar(&in, "in", "in.txt", "the input file to read")
-	flag.StringVar(&out, "out", "out.png", "the output file to write")
-	flag.Parse()
-	f, err := os.Open(in)
-	if err != nil {
-		log.Fatalf("failed opening file: %s", err)
-	}
-
-	scanner := bufio.NewScanner(f)
+func readFile(in io.Reader) Template {
+	scanner := bufio.NewScanner(in)
 
 	var partitions []string
 	var tmp []string
@@ -158,38 +152,63 @@ func main() {
 			}
 
 			e := Entity{
-				Name:       name,
-				Attributes: attributes,
-				Comments:   comments,
-				Option:     opt,
+				Name:           name,
+				Attributes:     attributes,
+				Comments:       comments,
+				HasComments:    len(comments) > 0,
+				CommentsString: strings.TrimSpace(strings.Join(comments, "\n")),
+				Option:         opt,
 			}
 
 			entities = append(entities, e)
 		}
 	}
-	var data Template
-	data.Title = title
-	data.Entities = entities
-	data.Relations = relations
+	var t Template
+	t.Title = title
+	t.Entities = entities
+	t.Relations = relations
+	return t
+}
 
-	outFile := strings.Split(out, ".")
-	ext := outFile[1]
-	path, _ := exec.LookPath("dot")
-	cmd := exec.Command(path, fmt.Sprintf("-T%s", ext))
-	stdin, err := cmd.StdinPipe()
+func main() {
+	var in, out string
+	flag.StringVar(&in, "in", "in.txt", "the input file to read")
+	flag.StringVar(&out, "out", "out.png", "the output file to write")
+	flag.Parse()
+
+	f, err := os.Open(in)
 	if err != nil {
+		log.Fatalf("failed opening file: %s", err)
+	}
+
+	data := readFile(f)
+	var buf bytes.Buffer
+	writeDot(data, &buf)
+	if err := render(buf.Bytes(), out); err != nil {
 		log.Fatal(err)
 	}
-	go func() {
-		defer stdin.Close()
-		Render(data, stdin)
-	}()
-	writeCmd, err := cmd.Output()
+}
+
+func render(src []byte, outPath string) error {
+	c, err := graphviz.ParseBytes(src)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
-	mode := int(0644)
-	ioutil.WriteFile(out, writeCmd, os.FileMode(mode))
+	g := graphviz.New()
+	pathAndExtension := strings.Split(outPath, ".")
+	var format graphviz.Format
+	switch ext := pathAndExtension[1]; ext {
+	case "svg":
+		format = graphviz.SVG
+	case "jpg", "jpeg":
+		format = graphviz.JPG
+	default:
+		format = graphviz.PNG
+	}
+	if err := g.RenderFilename(c, format, outPath); err != nil {
+		return err
+	}
+	return nil
 }
 
 func matchEntity(s string) []string {
@@ -283,6 +302,12 @@ digraph G {
 	    {{- end}}
 	</table>
     >]
+
+    {{ if $entity.HasComments }}
+     "{{$entity.Name}}_comments" [label="{{- $entity.CommentsString -}}",shape=note,constraint=true,style=filled,fillcolor="#ffffcc"]
+     "{{$entity.Name}}_comments" -> "{{$entity.Name}}"
+    {{ end }}
+
     {{- end}}
     //
     // Relationships.
@@ -292,12 +317,12 @@ digraph G {
     {{- end}}
 }`
 
-func Render(data Template, writer io.Writer) {
+func writeDot(data Template, out io.Writer) {
 	var noescape = func(value string) template.HTML {
 		return template.HTML(value)
 	}
 	tmpl := template.Must(template.New("").Funcs(template.FuncMap{
 		"noescape": noescape,
 	}).Parse(tpl))
-	tmpl.Execute(writer, data)
+	tmpl.Execute(out, data)
 }
